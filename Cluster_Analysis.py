@@ -77,7 +77,6 @@ for k in tqdm(range(num_city, num_pct, step)):
     silhouette_scores[k] = silhouette_score(df_terrorism[["lat", "lon"],x], y)
     labels[k] = y
 
-
 # %% plot the silhouette_scores agains different numbers of clusters
 import seaborn as sns
 
