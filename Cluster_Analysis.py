@@ -29,12 +29,11 @@ for k in tqdm(range(num_city, num_pct, step)):
     labels[k] = y
 
 
-# %% plot the silhouette_scores agains different numbers of clusters
+# %% plot the silhouette_scores against different numbers of clusters
 import seaborn as sns
 import matplotlib.pyplot as plt
 
 ax = sns.lineplot(x=list(silhouette_scores.keys()), y=list(silhouette_scores.values()),)
-ax.get_figure().savefig("trend.png", bbox_inches="tight", dpi=400)
 plt.xlabel("Number of Clusters")
 plt.ylabel("Silhouette Scores")
 plt.title("Silhouette Scores vs. Number of Clusters")
@@ -111,9 +110,10 @@ for row in tqdm(x[["lat", "lon", "label"]].to_dict("records")):
 
 m
 
-# %% Clustering for people being searched when crime is terrorism
-
-x = df_terrorism["searched"] == "YES"
+# %% Find cluster for terrorism in Manhattan city
+df_city = df_terrorism[df_terrorism["city"] == "MANHATTAN"]
+df_city["lat"] = df["coord"].apply(lambda val: val[1])
+df_city["lon"] = df["coord"].apply(lambda val: val[0])
 
 # %% run hierarchical clustering on a range of arbitrary values
 # record the silhouette_score and find the best number of clusters
@@ -122,22 +122,18 @@ from sklearn.metrics import silhouette_score
 from tqdm import tqdm
 
 silhouette_scores, labels = {}, {}
-num_city = df["city"].nunique()
-num_pct = df["pct"].nunique()
-step = 10
 
-for k in tqdm(range(num_city, num_pct, step)):
+for k in tqdm(range(2, 14)):
     c = AgglomerativeClustering(n_clusters=k)
-    y = c.fit_predict(x)
-    silhouette_scores[k] = silhouette_score(x, y)
+    y = c.fit_predict(df_city[["lat", "lon"]])
+    silhouette_scores[k] = silhouette_score(df_city[["lat", "lon"]], y)
     labels[k] = y
 
-# %% plot the silhouette_scores agains different numbers of clusters
+# %% plot the silhouette_scores against different numbers of clusters
 import seaborn as sns
 import matplotlib.pyplot as plt
 
 ax = sns.lineplot(x=list(silhouette_scores.keys()), y=list(silhouette_scores.values()),)
-ax.get_figure().savefig("trend.png", bbox_inches="tight", dpi=400)
 plt.xlabel("Number of Clusters")
 plt.ylabel("Silhouette Scores")
 plt.title("Silhouette Scores vs. Number of Clusters")
@@ -150,17 +146,15 @@ nyc = (40.730610, -73.935242)
 m = folium.Map(location=nyc)
 
 best_k = max(silhouette_scores, key=lambda k: silhouette_scores[k])
-df_terrorism["label"] = labels[best_k]
+df_city["label"] = labels[best_k]
 
 colors = sns.color_palette("hls", best_k).as_hex()
 
-for row in tqdm(df_terrorism[["lat", "lon", "label"]].to_dict("records")):
+for row in tqdm(df_city[["lat", "lon", "label"]].to_dict("records")):
     folium.CircleMarker(
         location=(row["lat"], row["lon"]), radius=1, color=colors[row["label"]]
     ).add_to(m)
 
 m
 
-
-
-
+# %%
